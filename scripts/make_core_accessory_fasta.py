@@ -33,7 +33,6 @@ def main():
 	df = pd.read_csv(args.gene_presence_absence, sep='\t', index_col=0)
 	number_of_genomes = len(df.columns)
 	core_threshold_n = floor(number_of_genomes*args.core)
-	print(core_threshold_n)
 
 	row_sums = df.sum(axis=1).to_dict()
 	core_genes = [x for x in row_sums.keys() if row_sums[x]>core_threshold_n]

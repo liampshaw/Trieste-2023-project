@@ -23,8 +23,9 @@ done < top50-ptus.txt
 
 
 # GC contents
+echo "PTU,component,GC" > output/PTU_core_accessory_GC.csv
 while read ptu;
 do
 	echo $ptu,"accessory",$(python scripts/GC_content.py --fasta core-accessory-fastas/"$ptu"_accessory_genes.fa)
 	echo $ptu,"core",$(python scripts/GC_content.py --fasta core-accessory-fastas/"$ptu"_core_genes.fa)
-done < top50-ptus.txt > output/PTU_core_accessory_GC.csv
+done < top50-ptus.txt >> output/PTU_core_accessory_GC.csv

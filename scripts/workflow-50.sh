@@ -20,3 +20,11 @@ do
 	python scripts/palindrome_densities.py --k 6 --fasta core-accessory-fastas/"$f"_accessory_genes.fa > core-accessory-palindromes/"$f"_k6_accessory_palindrome_densities.txt
 	echo $f
 done < top50-ptus.txt 
+
+
+# GC contents
+while read ptu;
+do
+	echo $ptu,"accessory",$(python scripts/GC_content.py --fasta core-accessory-fastas/"$ptu"_accessory_genes.fa)
+	echo $ptu,"core",$(python scripts/GC_content.py --fasta core-accessory-fastas/"$ptu"_core_genes.fa)
+done < top50-ptus.txt > output/PTU_core_accessory_GC.csv

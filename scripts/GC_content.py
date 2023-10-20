@@ -23,4 +23,4 @@ def GC(fasta):
 
 if __name__=="__main__":
 	args = get_options()
-	print(args.fasta, GC(args.fasta))
+	print(GC(args.fasta))

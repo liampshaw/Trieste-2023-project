@@ -8,6 +8,6 @@ It is currently a work-in-progress. We investigated the density of palindromes i
 
 * Run roary on each PTU using [https://github.com/Adalijuanluo/Plasmid_pan](https://github.com/Adalijuanluo/Plasmid_pan)
 * Run `scripts/workflow-50.sh`: first, use roary output and .ffn files from Prokka to obtain core/accessory gene fastas (every gene sequence from every plasmid ends up in either of these two files) with `make_core_accessory_fasta_from_roary.py`. Then also calculate palindrome densities and GC contents.
-* Analyse these fastas to get avoidance score of motifs with R'MES - see `run-rmes.sh` 
-
+* Analyse these fastas to get avoidance score of motifs with R'MES - see `run-rmes.sh` (on cluster)
+* Plot results with Rscripts: palindrome densities (`make_plot_top50.R`) and R'MES ranks (`make_plot_rmes_results.R`) 
 

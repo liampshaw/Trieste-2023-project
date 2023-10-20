@@ -1,0 +1,9 @@
+.DS_Store
+.Rhistory
+*fa
+*txt
+*csv
+old/
+scripts/__pycache__
+core-accessory-fastas/
+output/

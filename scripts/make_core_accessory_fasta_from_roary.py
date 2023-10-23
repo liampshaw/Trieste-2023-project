@@ -79,11 +79,11 @@ def main():
 	with open(args.output+'_core_genes.fa', 'w') as f:
 		for family in core_families: # for each family
 			for gene_id in protein_families[family]: # write all the gene sequences within it to file
-				f.write('>%s\n%s\n' % (gene_id, gene_sequences[gene_id]))
+				f.write('>%s|%s\n%s\n' % (gene_id, family, gene_sequences[gene_id]))
 	with open(args.output+'_accessory_genes.fa', 'w') as f:
 		for family in accessory_families:
 			for gene_id in protein_families[family]:
-				f.write('>%s\n%s\n' % (gene_id, gene_sequences[gene_id]))
+				f.write('>%s|%s\n%s\n' % (gene_id, family, gene_sequences[gene_id]))
 
 
 if __name__=="__main__":

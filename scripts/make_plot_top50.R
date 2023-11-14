@@ -80,4 +80,8 @@ p.GC = ggplot(palindrome_density_diff, aes(GC.diff, diff))+
 p.combined = cowplot::plot_grid(p.all, p.5kb,p.GC, nrow=1,  rel_widths = c(1.2, 1, 1))
 ggsave(p.combined, file='../output/palindrome-density-top50-plot.pdf', width=12, height=6)
 
+p.all+ggrepel::geom_text_repel(aes(label=PTU))
+
+ggsave(p.combined, file='../output/palindrome-density-top50-plot.pdf', width=12, height=6)
+
 

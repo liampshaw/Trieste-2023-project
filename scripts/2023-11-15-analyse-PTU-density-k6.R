@@ -43,7 +43,7 @@ for (ptu in ptu_list){
                    ptu_db[which(ptu_db$PTU==ptu), "host.range"],
                    " (", ptu_db[which(ptu_db$PTU==ptu), "parent_taxa"], ")\n",
                    as.character(ptu_db[which(ptu_db$PTU==ptu), "core_genes"]), " hard shell genes (n=", 
-                   as.character(ptu_db[which(ptu_db$PTU==ptu), "core_genes_total"]), " total); ",
+                   as.character(ptu_db[which(ptu_db$PTU==ptu), "core_genes_total"]), " total)\n",
                    as.character(ptu_db[which(ptu_db$PTU==ptu), "acc_genes"]), " accessory genes (n=", 
                    as.character(ptu_db[which(ptu_db$PTU==ptu), "acc_genes_total"]), " total)"))
   ggsave(file=paste0('output/target-plots/', ptu, '_k-6.pdf'),

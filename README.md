@@ -11,3 +11,8 @@ It is currently a work-in-progress. We investigated the density of palindromes i
 * Analyse these fastas to get avoidance score of motifs with R'MES - see `run-rmes.sh` (on cluster)
 * Plot results with Rscripts: palindrome densities (`make_plot_top50.R`) and R'MES ranks (`make_plot_rmes_results.R`) 
 
+
+* Download genomes for PTU genera with `ncbi_genus_subsample.py`
+* Analyse these with `rmsFinder`
+* Combine results with `combined_rmsFinder_results.py`
+

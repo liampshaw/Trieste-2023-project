@@ -1,6 +1,7 @@
 import pandas as pd
 import glob
 import os
+import re
 
 # Directory path
 directories = glob.glob('genomes/n100/*')
@@ -30,3 +31,20 @@ final_df = pd.concat(dataframes)
 
 # Display the final DataFrame (optional)
 final_df.to_csv('combined.csv', index=False)
+
+
+# Get number of genomes to normalise by
+total_genomes = {re.sub('.*/', '', d):len(glob.glob(os.path.join(d, '*.gz'))) for d in directories}
+print(total_genomes)
+
+
+# Summarise by genus/sequence
+summary_df = final_df.groupby(['genus', 'sequence']).agg({'genome': pd.Series.nunique})
+# Reset the index 
+summary_df.reset_index(inplace=True)
+
+print(summary_df)
+# Add genus counts
+summary_df['total_genomes'] = summary_df['genus'].map(total_genomes)
+summary_df['normalized_count'] = summary_df['genome'] / summary_df['total_genomes'] 
+summary_df.to_csv('target_db.csv', index=False)

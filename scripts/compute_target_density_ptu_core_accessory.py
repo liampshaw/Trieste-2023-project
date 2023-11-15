@@ -1,12 +1,12 @@
 # Compute the density of various targets for plasmids within a PTU
 
+import pandas as pd
 # Run from main directory (i.e. call as scripts/compute_target_density_ptu_core_accessory.py)
 
 # Takes:
-# target database (output/target_db.csv) done
-# core/accessory fasta prefix for PTU
+target_db_file = 'output/target_db.csv'# target database, generated with combined_rmsFinder_output.py
 ptu = 'PTU-Y' # name of PTU
-dir_prefix = 'core-accessory-fastas/PTU-Y_' # prefix
+dir_prefix = 'core-accessory-fastas/' # prefix for fasta files
 taxonomy_df_file = 'data/PTU-genera-taxonomy.txt' # taxonomy file 
 ptu_df_file = 'data/top50ptus_info.csv' # PTU information file (host range)
 
@@ -96,24 +96,48 @@ taxonomy_df.drop('Unnamed: 6', axis=1, inplace=True)
 
 # Read in PTU info
 ptu_info_df = pd.read_csv(ptu_df_file)
-host_range_map = {'I': 'Species', 'II':'Genus', 'III':'Family', 'IV':'Order', 'V':'Class', 'VI':'Phylum'}
-ptu_info_df['range'] = ptu_info_df['host.range'].map(host_range_map)
+#host_range_map = {'I': 'Species', 'II':'Genus', 'III':'Family', 'IV':'Order', 'V':'Class', 'VI':'Phylum'}
+#ptu_info_df['range'] = ptu_info_df['host.range'].map(host_range_map)
 
-# Treat species as genus (for now) - because e.g. Enterococcus is all Enterococcus faecium in 
+# N.B. Treat species as genus (for now) - because e.g. Enterococcus is all Enterococcus faecium in 
 # the RefSeq200 top 50 PTUs
-
-
 
 
 # Get sequence of core/accessory fastas
 core_seq = get_seq(dir_prefix+ptu+'_core_genes.fa')
-core_seq_rev_comp = reverse_complement(core_seq)
 acc_seq = get_seq(dir_prefix+ptu+'_accessory_genes.fa')
-acc_seq_rev_comp = reverse_complement(core_seq)
+
+# Target database
+target_df = pd.read_csv(target_db_file)
+target_df['ambiguity'] = [len(possibleSequences(x)) for x in target_df['sequence']]
+target_df['length'] = [len(x) for x in target_df['sequence']]
+
+# For every unique target, calculate the density in the fasta files
 
 
 # Let's just care about non-overlapping cases, so use .count() 
-occurrences = sum([core_seq.count(x) for x in possibleSequences(target)])
+core_target_densities = {target:sum([core_seq.count(x) + 
+							core_seq.count(reverse_complement(x)) 
+							for x in possibleSequences(target)])/(2*len(core_seq)-core_seq.count('Z')) 
+							for target in set(target_df['sequence'])}
+accessory_target_densities = {target:sum([acc_seq.count(x) + 
+							acc_seq.count(reverse_complement(x)) 
+							for x in possibleSequences(target)])/(2*len(acc_seq)-acc_seq.count('Z')) 
+							for target in set(target_df['sequence'])}
+
+target_df['core_density'] = target_df['sequence'].map(core_target_densities)
+target_df['acc_density'] = target_df['sequence'].map(accessory_target_densities)
+
+# Get the host range (included genera) for the PTU
+parent_taxa = ptu_info_df.loc[ptu_info_df['PTU']==ptu]['parent_taxa'].iloc[0]
+host_range = ptu_info_df.loc[ptu_info_df['PTU']==ptu]['range_level'].iloc[0]
+
+genera_within_range = list(taxonomy_df[taxonomy_df[host_range]==parent_taxa]['Genus'])
+# Take the parent taxa and match on that from taxonomy_df using range
+target_df['within_range'] = target_df['genus'].isin(genera_within_range)
+
+# Write final csv
+target_df.to_csv('PTU-Y-test.csv', index=False)
 
 
 

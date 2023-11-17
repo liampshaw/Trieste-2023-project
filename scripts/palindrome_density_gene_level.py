@@ -12,6 +12,10 @@ def get_options():
                                      prog='palindrome_densities')
 	parser.add_argument('--fasta', help='fasta file', required=True)
 	parser.add_argument('--k', help='value of k', required=True) 
+	parser.add_argument('--category', help='category to add to output', required=False,
+		default='') 
+	parser.add_argument('--ptu', help='PTU name to add to output', required=False,
+		default='') 
 	return parser.parse_args()
 
 
@@ -63,8 +67,11 @@ def main():
 		total_sum = 0
 		for x in lexicographical_indices_palindromes:
 			total_sum += float(output[x])
-		print(gene_group, n_sequences_in_group, sequence_length/n_sequences_in_group, total_sum, total_sum/(sequence_length)) 
-
+		output_string = ','.join([args.ptu, args.category, gene_group, 
+			str(n_sequences_in_group),
+			str(round(sequence_length/n_sequences_in_group, 1)), str(total_sum), 
+			str(round(total_sum/(sequence_length), 6))])
+		print(output_string)
 
 
 if __name__=="__main__":

@@ -47,6 +47,23 @@ def count_kmers(fasta, k, with_rev_comp=False):
         #print(, end=' ')
     return(output_list)
 
+def count_kmers_seq(dna, k, with_rev_comp=False):
+    if with_rev_comp:
+        rev_comp_dna = ap.reverse_complement(dna)
+        dna = dna+"Z"+rev_comp_dna
+    table = {};
+    for kmer in product('ACGT', repeat=k):
+        table[''.join(kmer)] = 0
+
+    for i in range(len(dna) - k + 1):
+        kmer = dna[i:i + k]
+        if all([base in ['A', 'T', 'C', 'G'] for base in kmer]): # only if kmer is ATCG-based, no other characters allowed
+            table[kmer] = table[kmer] + 1
+    output_list = []
+    for kmer in product('ACGT', repeat=k):
+        output_list.append(table[''.join(kmer)])
+        #print(, end=' ')
+    return(output_list)
 
 def main():
     args = get_options()

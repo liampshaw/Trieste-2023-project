@@ -71,9 +71,52 @@ ggplot(d.reduced[which(d.reduced$PTU=="PTU-I1"),], aes(x, diff_density))+
 
 # One line per plasmid?
 d.reduced.median = d.reduced %>% group_by(PTU, x) %>% 
-  summarise(median=median(diff_density))
+  summarise(median=median(diff_density),
+            n=length(diff_density), 
+            median.original=median(density),
+            GC=median(GC_n))
 ggplot(d.reduced.median, aes(x, median))+
   geom_hline(yintercept = 0, linetype='dashed')+
   theme_bw()+
   geom_line(aes(group=PTU), alpha=1)+
   facet_wrap(~PTU, scales="free_x")
+
+pdf('../output/2023-11-28-leading-region-palindrome-density.pdf', width=12, height=8)
+ggplot(d.reduced.median, aes(x, median.original))+
+  geom_hline(yintercept = 0, linetype='dashed')+
+  theme_bw()+
+  geom_line(aes(group=PTU, alpha=n))+
+  facet_wrap(~PTU, scales="free_x")+
+  ylab("6-mer palindrome density (5kb window)")+
+  xlab("Position on plasmid (bp)")+
+  labs(alpha="N plasmids")+
+  theme(panel.grid=element_blank())
+dev.off()
+
+pdf('../output/2023-11-28-leading-region-palindrome-density-PTU-C.pdf', width=8, height=4)
+ggplot(d.reduced.median[which(d.reduced.median$PTU=="PTU-C"),], aes(x, median.original))+
+  geom_hline(yintercept = 0, linetype='dashed')+
+  theme_bw()+
+  geom_line(aes(group=PTU, alpha=n))+
+  facet_wrap(~PTU, scales="free_x")+
+  ylab("6-mer palindrome density (5kb window)")+
+  xlab("Position on plasmid (bp)")+
+  labs(alpha="N plasmids")+
+  theme(panel.grid=element_blank())+
+  scale_x_continuous(breaks=seq(0,250000,25000))
+dev.off()
+
+# the true centre of the sliding window
+d.reduced.median$x.new = d.reduced.median$x+2500
+pdf('../output/2023-11-28-PTU-C-zoom.pdf', width=8, height=4)
+p.PTU.C = ggplot(d.reduced.median[which(d.reduced.median$PTU=="PTU-C"),], aes(x.new, median.original))+
+  geom_hline(yintercept = 0, linetype='dashed')+
+  theme_bw()+
+  geom_line(aes(group=PTU, alpha=n))+
+  facet_wrap(~PTU, scales="free_x")+
+  ylab("6-mer palindrome density (5kb window)")+
+  xlab("Position on plasmid (bp)")+
+  labs(alpha="N plasmids")+
+  theme(panel.grid=element_blank())+
+  xlim(c(0,50000))
+dev.off()

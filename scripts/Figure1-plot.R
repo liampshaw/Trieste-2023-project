@@ -14,10 +14,11 @@ library(scales)
 library(aplot)
 
 # Custom colour function for heatmap
-black_color_scale <- scale_fill_gradientn(
-  colours = c("white", "darkgrey", "black"),
-  values = scales::rescale(c(0, 0.01, 1), to = c(0, 1)),
-  na.value = "white"
+black_color_scale <- scale_fill_gradient2(
+  low = "white",
+  mid="darkgrey",
+  high="black",
+  midpoint=1
 )
 red_color_scale <- scale_fill_gradientn(
   colours = c("white", "pink", "red"),
@@ -103,6 +104,10 @@ rm_target_df = read.csv('../output/targets-genera-n100.csv', header=T)
 rm_target_df = rm_target_df[which(rm_target_df$genus!="-" & 
                                     rm_target_df$genus!="Leclercia" & 
                                     rm_target_df$genus!="Phytobacter"),]
+# Genera genome counts (for normalization)
+genera_counts = read.csv('../output/genera-genome-counts.csv', 
+                         header=T)
+
 
 rm_target_df$length = nchar(rm_target_df$sequence)
 rm_target_df_6 = rm_target_df %>% 
@@ -110,23 +115,63 @@ rm_target_df_6 = rm_target_df %>%
   group_by(sequence, genus, length) %>% 
   summarise(n=length(genus))
 rm_target_df_6$length = NULL
-colnames(rm_target_df_6) = c("Sequence", "Genus", "n")
+
+# Normalise by number of genomes to get a % prevalence
+rm_target_df_6 <- left_join(rm_target_df_6, genera_counts, by = "genus")
+rm_target_df_6$n.perc = rm_target_df_6$n/rm_target_df_6$genomes * 100
+rm_target_df_6$genomes = NULL
+
+colnames(rm_target_df_6) = c("Sequence", "Genus", "n", "Perc")
 # Sort by number of genera RM systems are seen in
 rm_counts = rm_target_df_6 %>%
   group_by(Sequence) %>%
   summarise(Genus_Count = n_distinct(Genus)) %>%
   arrange(desc(Genus_Count))
 
-rm_heatmap_data = data.frame(rm_target_df_6 %>%
-             pivot_wider(names_from = Sequence, values_from = n, values_fill = list(n = 0)) %>%
-             select(c("Genus", one_of(rm_counts$Sequence))))
-rownames(rm_heatmap_data) = rm_heatmap_data$Genus
-rm_heatmap_data$Genus = NULL
+#rm_heatmap_data = data.frame(rm_target_df_6 %>%
+#             pivot_wider(names_from = Sequence, values_from = n, values_fill = list(n = 0)) %>%
+#             select(c("Genus", one_of(rm_counts$Sequence))))
+#rownames(rm_heatmap_data) = rm_heatmap_data$Genus
+#rm_heatmap_data$Genus = NULL
 
-rm_target_df_6$Genus = ordered(rm_target_df_6$Genus,
-                               levels=)
+# plasmid data for clustering
+data_for_clustering <- data.frame(plasmids_by_genera %>%
+  pivot_wider(names_from = PTU, values_from = n, values_fill = list(n = 0)),
+  check.names = FALSE)
+# Remove Genus column for clustering
+rownames(data_for_clustering) = data_for_clustering$Genus
+data_for_clustering$Genus= NULL
+#data_for_clustering_no_genus <- data_for_clustering %>% select(-Genus)
+# Calculate distance matrix
+dist_matrix <- dist(t(data_for_clustering))
+# Perform hierarchical clustering
+hclust_result <- hclust(dist_matrix)
+# Extract the order of PTUs from the clustering
+ptu_order <- data_for_clustering %>% colnames() %>% .[hclust_result$order]
+
+# Same for rm
+# RM data for clustering
+data_for_clustering <- data.frame(rm_target_df_6 %>% select(-n) %>%
+                                    pivot_wider(names_from = Sequence, values_from = Perc, values_fill = list(Perc = 0)),
+                                  check.names = FALSE)
+# Remove Genus column for clustering
+rownames(data_for_clustering) = data_for_clustering$Genus
+data_for_clustering$Genus= NULL
+#data_for_clustering_no_genus <- data_for_clustering %>% select(-Genus)
+# Calculate distance matrix
+dist_matrix <- dist(t(data_for_clustering))
+# Perform hierarchical clustering
+hclust_result <- hclust(dist_matrix)
+# Extract the order of PTUs from the clustering
+rm_order <- data_for_clustering %>% colnames() %>% .[hclust_result$order]
+
+
+
+rm_target_df_6$Sequence = ordered(rm_target_df_6$Sequence,
+                               levels=rm_order)
 plasmids_by_genera$PTU = ordered(plasmids_by_genera$PTU,
-                                 levels=ptu_counts$PTU)
+                                 #levels=ptu_counts$PTU)
+                                 levels=ptu_order)
 p.ptu = ggplot(plasmids_by_genera,aes(PTU,Genus, fill=n) )+
   geom_tile()+
   theme_bw()+
@@ -140,7 +185,7 @@ p.ptu = ggplot(plasmids_by_genera,aes(PTU,Genus, fill=n) )+
 
 rm_target_df_6$Sequence = ordered(rm_target_df_6$Sequence,
                                  levels=rm_counts$Sequence)
-p.rm = ggplot(rm_target_df_6, aes(Sequence, Genus, fill=n))+
+p.rm = ggplot(rm_target_df_6, aes(Sequence, Genus, fill=Perc))+
   geom_tile()+
   red_color_scale+
   theme_bw()+
@@ -158,10 +203,13 @@ p.rm = ggplot(rm_target_df_6, aes(Sequence, Genus, fill=n))+
   )+
   xlab("R-M target")
 
-p.combined = p.ptu %>% 
-  insert_left(p.tree+ggtree::hexpand(.7, 1), width=0.5) %>% 
-  insert_right(p.rm, width=1.1)
-pdf('../figures/2023-11-28-Figure-1.pdf', width=15, height=6)
+p.a = p.tree+ggtree::hexpand(.7, 1)+ggtitle("(a)")
+p.b = p.ptu+ggtitle("(b)")
+p.c = p.rm+ggtitle("(c)")
+p.combined = p.b %>% 
+  insert_left(p.a, width=0.5) %>% 
+  insert_right(p.c, width=1.1)
+pdf('../figures/2023-11-28-Figure-1.pdf', width=16, height=6)
 p.combined
 dev.off()
 
